@@ -1,7 +1,8 @@
 {
   "name": "portable-mode-update",
-  "displayName": "portable mode update",
+  "displayName": "Portable mode update",
   "description": "update the vs code portable version",
+  "icon": "images/icon.png",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.37.0"
