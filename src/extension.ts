@@ -154,7 +154,7 @@ read
         }
 
         fs.writeFileSync(scriptPath, scriptContent);
-        outputChannel.show(true);
+        // outputChannel.show(true);
         outputChannel.appendLine(`Update script path: ${scriptPath}`);
         outputChannel.appendLine(``);
 
@@ -202,6 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
             const latestVersion = release.tag_name.replace(/^v/, '');
             
             outputChannel.clear();
+            outputChannel.show(true);
 
             // take setting from configuration
             demoMode = vscode.workspace.getConfiguration('portable-mode-update').get<boolean>('demoMode', false);
@@ -230,7 +231,7 @@ export function activate(context: vscode.ExtensionContext) {
                     downloadUrl = 'https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive';
                 }
 
-                outputChannel.show(true);
+                // outputChannel.show(true);
                 const response = await vscode.window.showInformationMessage(
                     `A new version of ${vscodeLabel} (${latestVersion}) is available. Would you like to update your portable mode installation, available at folder ${vscodeDir}?`,
                     'Yes', 'No'
