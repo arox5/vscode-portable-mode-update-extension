@@ -40,9 +40,11 @@ Alternatively, add this to your `settings.json`:
 
 To create a `.vsix` package for sharing:
 
-1. Install VSCE globally: `npm install -g @vscode/vsce`
+1. Install dependencies: `npm install`
 2. Run: `npm run vsce:package`
 3. Share the generated `.vsix` file
+
+Note: `@vscode/vsce` is included as a dev dependency, so no global installation is required.
 
 To install the extension from a `.vsix` file:
 
