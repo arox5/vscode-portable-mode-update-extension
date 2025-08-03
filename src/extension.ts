@@ -240,9 +240,6 @@ export function activate(context: vscode.ExtensionContext) {
             
             outputChannel.clear();
 
-						// set focus on the output channel
-						outputChannel.show(true);
-
 						outputChannel.appendLine(`Portable mode directory: ${vscodeDir}`);
 						outputChannel.appendLine(``);
 
@@ -257,6 +254,9 @@ export function activate(context: vscode.ExtensionContext) {
             outputChannel.appendLine(``);
 
             if (latestVersion > currentVersion) {
+								// set focus on the output channel
+								outputChannel.show(true);
+
                 // Find the Windows ZIP asset
                 let downloadUrl: string | undefined;
                 const windowsAsset = release.assets.find(asset => 
