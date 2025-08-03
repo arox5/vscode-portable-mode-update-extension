@@ -36,7 +36,19 @@ Alternatively, add this to your `settings.json`:
 "portable-mode-update.demoMode": false
 ```
 
-## Packaging and Sharing
+## Development Setup
+
+### npm Configuration
+
+This project includes a project-specific `.npmrc` file that overrides global npm settings:
+
+- **Registry**: Uses the public npm registry (`https://registry.npmjs.org/`) instead of any corporate/private registries
+- **SSL**: Enables strict SSL verification for security
+- **Scope**: Only applies to this project directory
+
+The project-specific configuration ensures consistent package installation regardless of your system's global npm settings.
+
+### Packaging and Sharing
 
 To create a `.vsix` package for sharing:
 
