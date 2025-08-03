@@ -6,13 +6,18 @@ import * as path from 'path';
 import { spawn } from 'child_process';
 
 const vscodeDir = path.dirname(process.execPath);
+//const vscodeDir = "C:\\Temp\\VSCode";
+
 const vscodeLabel = "Visual Studio Code";
 const outputChannel = vscode.window.createOutputChannel('Portable mode update');
 
 // set to false, to just create the update script without running it
 // set to true, to run the update script automatically after creation
 let demoMode = false;
-const demoModeMsg = "⚠️ Demo mode is enabled, update script will not be executed automatically ⚠️"
+const demoModeMsg = 
+	"**************************************************************************\n" +
+	"* Demo mode is enabled, update script will not be executed automatically *\n" +
+	"**************************************************************************\n";
 
 interface VSCodeRelease {
     tag_name: string;
@@ -89,7 +94,7 @@ async function getLatestVSCodeRelease(): Promise<VSCodeRelease> {
 // }
 
 async function updateVSCode(downloadUrl: string): Promise<void> {
-    const downloadPath = path.join(process.env.TEMP || '', 'vscode-update.zip');
+    const downloadPath = path.join(process.env.TEMP || '', 'vscode-portable-mode-update.zip');
 
     try {
         outputChannel.appendLine(`Creating script...`);
@@ -97,7 +102,7 @@ async function updateVSCode(downloadUrl: string): Promise<void> {
 
         // Create update script
         const scriptExt = process.platform === 'win32' ? 'ps1' : 'sh';
-        const scriptPath = path.join(process.env.TEMP || '', `update-vscode.${scriptExt}`);
+        const scriptPath = path.join(process.env.TEMP || '', `vscode-portable-mode-update.${scriptExt}`);
         let scriptContent: string;
         if (process.platform === 'win32') {
             scriptContent = `
@@ -165,7 +170,7 @@ read
         if( demoMode ) {
             outputChannel.appendLine(`${demoModeMsg}`);
         } else {
-            outputChannel.appendLine(`Process update is starting 😊`);
+            outputChannel.appendLine(`Process update is starting.`);
             outputChannel.appendLine(``);
 
             // Execute the update script as a detached process and exit VS Code
@@ -194,7 +199,7 @@ read
 export function activate(context: vscode.ExtensionContext) {
     console.log('Extension "Portable mode update" is now active');
 
-    // Run the update check automatically on startup
+    // Register the command
     context.subscriptions.push(vscode.commands.registerCommand('portable-mode-update.checkVersion', async () => {
         try {
             const currentVersion = vscode.version;
@@ -202,15 +207,18 @@ export function activate(context: vscode.ExtensionContext) {
             const latestVersion = release.tag_name.replace(/^v/, '');
             
             outputChannel.clear();
-            outputChannel.show(true);
+
+						// set focus on the output channel
+						outputChannel.show(true);
+
+						outputChannel.appendLine(`Portable mode directory: ${vscodeDir}`);
+						outputChannel.appendLine(``);
 
             // take setting from configuration
             demoMode = vscode.workspace.getConfiguration('portable-mode-update').get<boolean>('demoMode', false);
 
             if (demoMode) {
-                outputChannel.appendLine(``);
                 outputChannel.appendLine(`${demoModeMsg}`);
-                outputChannel.appendLine(``);
             }
             outputChannel.appendLine(`Current ${vscodeLabel} version: ${currentVersion}`);
             outputChannel.appendLine(`Latest available version: ${latestVersion}`);
@@ -228,28 +236,45 @@ export function activate(context: vscode.ExtensionContext) {
                     downloadUrl = windowsAsset.browser_download_url;
                 } else {
                     // Fallback to official download URL if asset not found
-                    downloadUrl = 'https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive';
+										if (process.platform === 'win32') {
+												downloadUrl = vscode.workspace.getConfiguration('portable-mode-update').get<string>('win32DownloadURL', 'https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive');
+										} else {
+												downloadUrl = undefined;
+										}
                 }
 
-                // outputChannel.show(true);
-                const response = await vscode.window.showInformationMessage(
-                    `A new version of ${vscodeLabel} (${latestVersion}) is available. Would you like to update your portable mode installation, available at folder ${vscodeDir}?`,
-                    'Yes', 'No'
-                );
+								if (downloadUrl) {
+									outputChannel.appendLine(`Update will be downloaded from: ${downloadUrl}`);
+									outputChannel.appendLine(``);
 
-                if (response === 'Yes' && downloadUrl) {
-                    await updateVSCode(downloadUrl);
-                } else {
-                    outputChannel.appendLine(`Update cancelled 😢`);
-                }
+									const response = await vscode.window.showInformationMessage(
+											`A new version of ${vscodeLabel} (${latestVersion}) is available. Would you like to update your portable mode installation, available at folder ${vscodeDir}?`,
+											'Yes', 'No'
+									);
+									if (response === 'Yes') {
+											await updateVSCode(downloadUrl);
+									} else {
+											outputChannel.appendLine(`Update cancelled.`);
+									}
+								} else {
+                outputChannel.appendLine(`Unable to define a download URL, the platform (${process.platform}) is not supported for automatic updates. Please download the latest version of ${vscodeLabel} manually from the official website.`);
+            	}
             } else {
-                outputChannel.appendLine(`You are already using the latest version 😊`);
+                outputChannel.appendLine(`You are already using the latest version.`);
             }
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to check ${vscodeLabel} versions: ${error}`);
         }
     }));
-    vscode.commands.executeCommand('portable-mode-update.checkVersion');
+
+    // Check if startup execution is enabled and run the update check automatically on startup
+    const startUpEnabled = vscode.workspace.getConfiguration('portable-mode-update').get<boolean>('startUp', true);
+    if (startUpEnabled) {
+        vscode.commands.executeCommand('portable-mode-update.checkVersion');
+    } else {
+				outputChannel.appendLine(`The version check during startup is disabled.`);
+				outputChannel.appendLine(``);
+		}
 }
 
 // This method is called when your extension is deactivated

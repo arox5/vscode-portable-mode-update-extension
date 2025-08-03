@@ -30,6 +30,16 @@
           "type": "boolean",
           "default": false,
           "description": "If true, the update script will not be executed automatically (demo mode). If false, the update script will run after creation."
+        },
+        "portable-mode-update.startUp": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, the version control is executed every Visual Studio Code startup."
+        },
+        "portable-mode-update.win32DownloadURL": {
+          "type": "string",
+          "default": "https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-archive",
+          "description": "If download URL is not found in VS Code update API, this URL is used to download the most recenct version."
         }
       }
     }
