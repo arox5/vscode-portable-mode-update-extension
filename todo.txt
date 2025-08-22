@@ -1,0 +1,4 @@
+Portable Mode Update todo
+
+- [ ] check version only for Windows: if not Windows, just show a message
+- [ ] alert in case of proxy, to explain that this doens't support it
