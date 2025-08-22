@@ -39,15 +39,50 @@ async function getLatestVSCodeRelease(): Promise<VSCodeRelease> {
 
         https.get(options, (res) => {
             let data = '';
-            res.on('data', (chunk) => data += chunk);
-            res.on('end', () => {
-                try {
-                    const release = JSON.parse(data) as VSCodeRelease;
-                    resolve(release);
-                } catch (error) {
-                    reject(new Error('Error parsing version data: ' + (error instanceof Error ? error.message : String(error))));
+
+            // Handle redirect responses
+            if (res.statusCode === 301 || res.statusCode === 302) {
+                const location = res.headers.location;
+                if (location) {
+                    // Follow redirect by making a new request
+                    https.get(location, (redirectRes) => {
+                        if (redirectRes.statusCode === 200) {
+                            redirectRes.on('data', (chunk) => data += chunk);
+                            redirectRes.on('end', () => {
+                                try {
+                                    const release = JSON.parse(data) as VSCodeRelease;
+                                    resolve(release);
+                                } catch (error) {
+                                    reject(new Error('Error parsing version data: ' + (error instanceof Error ? error.message : String(error))));
+                                }
+                            });
+                        } else {
+                            reject(new Error(`Failed to get latest ${vscodeLabel} version after redirect: ${redirectRes.statusCode} ${redirectRes.statusMessage}`));
+                        }
+                    }).on('error', (error) => {
+                        reject(new Error(`Redirect request failed: ${error.message}`));
+                    });
+                    return;
+                } else {
+                    reject(new Error('Redirect response with no location header'));
+                    return;
                 }
-            });
+            }
+
+						if(res.statusCode === 200) {
+							res.on('data', (chunk) => data += chunk);
+							res.on('end', () => {
+									try {
+											const release = JSON.parse(data) as VSCodeRelease;
+											resolve(release);
+									} catch (error) {
+											reject(new Error('Error parsing version data: ' + (error instanceof Error ? error.message : String(error))));
+									}
+							});
+						} else {
+							reject(new Error(`Failed to get latest ${vscodeLabel} version: ${res.statusCode} ${res.statusMessage}`));
+						}
+
         }).on('error', (error) => {
             reject(error);
         });
@@ -235,9 +270,18 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('portable-mode-update.checkVersion', async () => {
         try {
             const currentVersion = vscode.version;
-            const release = await getLatestVSCodeRelease();
-            const latestVersion = release.tag_name.replace(/^v/, '');
-            
+						let release;
+						let latestVersion;
+
+						try {
+							release = await getLatestVSCodeRelease();
+            	latestVersion = release.tag_name.replace(/^v/, '');
+						} catch (error) {
+							outputChannel.clear();
+							outputChannel.appendLine(`${error}`);
+							return;
+						}
+
             outputChannel.clear();
 
 						outputChannel.appendLine(`Portable mode directory: ${vscodeDir}`);
